@@ -14,7 +14,6 @@ export const getUserBywalletId = (
   walletId.forEach(async (element) => {
     try {
       const user = await userModal.findOne({ wallet: element });
-      console.log({ user });
       // @ts-ignore
       if (user) {
         winnerIds.push(user._id);
