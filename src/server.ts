@@ -265,9 +265,6 @@ async function startMatching(socket: any, data: any) {
         socket.to(opponent.socketId).emit("gotOpponent", data, roomid, p2Id);
         socket.emit("gotOpponent", opponent, roomid, p1Id);
 
-        console.log({ p1Id });
-        console.log({ p2Id });
-
         isOpponent = true;
       } else {
         socket.emit("noOpponent", {
