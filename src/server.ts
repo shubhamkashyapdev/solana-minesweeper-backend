@@ -26,7 +26,7 @@ import {
 import { gameRecordsModal } from "./models/gameRecords.modal";
 
 const app = express();
-const PORT = config.get("PORT");
+const PORT = process.env.PORT || config.get("PORT");
 
 app.use(fileupload({ useTempFiles: true }));
 app.use(cors());
