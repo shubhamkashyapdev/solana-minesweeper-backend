@@ -1,7 +1,36 @@
 import { transactionModal } from "../models/transaction.modal";
 import { Request, Response } from "express";
 
-export const getAllTransction = async (req: Request, res: Response) => {};
+export const getAllTransction = async (req: Request, res: Response) => {
+  const { page = 1, limit = 10 } = req.query;
+  const walletId = req.query.walletId;
+  if (!walletId) {
+    res.status(400).send({ success: false, message: "no wallet Id Found " });
+  } else {
+    try {
+      const transcation = await transactionModal
+        .find({ walletId: walletId })
+        //@ts-ignore
+        .limit(limit * 1)
+        //@ts-ignore
+        .skip((page - 1) * limit)
+        .exec();
+
+      const count = await transactionModal.countDocuments();
+
+      res.send({
+        success: true,
+        count: transcation.length,
+        //@ts-ignore
+        totalPages: Math.ceil(count / limit),
+        currentPage: page,
+        data: transcation,
+      });
+    } catch (err) {
+      res.status(400).send({ success: false, error: err });
+    }
+  }
+};
 
 export const addTransaction = async (
   amount: number,

@@ -24,8 +24,15 @@ export const resgister = async (req: Request, res: Response) => {
   });
 
   try {
-    await newUser.save();
-    res.send({ success: true });
+    const checkUser = await userModal.findOne({ wallet: walletAddress });
+
+    if (checkUser) {
+      res.send({ success: false, message: "user already exist" });
+      return;
+    }
+
+    const user = await newUser.save();
+    res.send({ success: true, data: user });
   } catch (err) {
     console.log({ err });
     res.status(400).json({ success: false, err });

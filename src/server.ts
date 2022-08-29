@@ -9,7 +9,7 @@ import fileupload from "express-fileupload";
 import { v4 as uuidv4 } from "uuid";
 
 import userRotes from "./routes/user.registration.route";
-import searchOpponent from "./routes/searchOpponent.route";
+import transactionRoutes from "./routes/transcations.route";
 import gameRecodsRoutes from "./routes/gameRecords.route";
 
 import { availableUserModel } from "./models/AvailableForMatching.modal";
@@ -22,7 +22,7 @@ import onlineUsersRoute from "./routes/OnlineUsers.route";
 import {
   addTransaction,
   updateTransaction,
-} from "./controllers/transctions.controller";
+} from "./controllers/transcations.controller";
 import { gameRecordsModal } from "./models/gameRecords.modal";
 
 const app = express();
@@ -34,12 +34,12 @@ app.use(express.urlencoded({ extended: false }));
 app.use(morgan("dev"));
 app.use(bodyParser.json());
 
-app.get('/', (req, res) => {
-  res.send(`API is working fine!`)
-})
+app.get("/", (req, res) => {
+  res.send(`API is working fine!`);
+});
 
 app.use("/", userRotes);
-app.use("/", searchOpponent);
+app.use("/", transactionRoutes);
 app.use("/", onlineUsersRoute);
 app.use("/", gameRecodsRoutes);
 
