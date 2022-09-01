@@ -24,6 +24,8 @@ import {
   updateTransaction,
 } from "./controllers/transcations.controller";
 import { gameRecordsModal } from "./models/gameRecords.modal";
+import colors from "colors";
+colors.enable();
 
 const app = express();
 const PORT = process.env.PORT || config.get("PORT");
@@ -38,28 +40,32 @@ app.get("/", (req, res) => {
   res.send(`API is working fine!`);
 });
 
-app.use("/", userRotes);
-app.use("/", transactionRoutes);
-app.use("/", onlineUsersRoute);
-app.use("/", gameRecodsRoutes);
+app.use("/", userRotes); // user registration and upload profile pic
+app.use("/", transactionRoutes); // get all trancsation
+app.use("/", onlineUsersRoute); // get list of online user and other
+app.use("/", gameRecodsRoutes); // get game records
 
-connectToDB();
+connectToDB(); // try connection to mongodb
 
 const server = app.listen(PORT, () => {
   console.log("Server is Running : " + PORT);
 });
 
-const socketIo: any = init(server);
+const socketIo: any = init(server); // socket instance
 
 socketIo.use(async (socket: any, next: any) => {
-  const walletId = socket.handshake.auth.walletId;
-  const checkUser = await userModal.findOne({ wallet: walletId });
+  // socket middleware
+  // listerning for incoming connection request
+  const walletId = socket.handshake.auth.walletId; // authentication
+
+  const checkUser = await userModal.findOne({ wallet: walletId }); // verify user with user walletAddress
   if (!walletId) {
+    // disconnect if no walletAddress found
     return socket.disconnect();
   } else if (checkUser) {
     checkUser.socketId = socket.id;
     checkUser.save();
-    await addtoOnlineList(checkUser);
+    await addtoOnlineList(checkUser); // add user to online users array
   } else {
     const newUser = new userModal({
       name: "",
@@ -74,7 +80,8 @@ socketIo.use(async (socket: any, next: any) => {
 });
 
 socketIo.on("connection", async (socket: any) => {
-  console.log("client Connected with id ", socket.id);
+  // listining for connections
+  console.log("client Connected with id ".cyan.bold, socket.id);
   socket.emit("message", `connected with id ${socket.id}`);
 
   socket.on("message", (msg: any) => {
@@ -109,27 +116,31 @@ socketIo.on("connection", async (socket: any) => {
   socket.on(
     "updateScore",
     async (roomId: string, transactionId: string, score: number) => {
-      const isGame: any = await gameRecordsModal
+      // update score
+      const isGame: any = await gameRecordsModal // finding game record and updating score
         .findOne({ gameId: roomId })
         .populate("user1")
         .populate("user2");
 
       if (isGame.user1._id == transactionId) {
+        // checking the uer
         // update score in doc
         isGame.score = { ...isGame.score, p1: score };
         console.log("updatig score of Player 1 with Id ", transactionId);
         // console.log({ isGame });
       }
       if (isGame.user2._id == transactionId) {
+        // checking the user
         console.log("updatig score of Player 2 with Id ", transactionId);
         // update score in doc
         isGame.score = { ...isGame.score, p2: score };
       }
 
-      await isGame.save();
+      await isGame.save(); // saving game record
 
       const { p1, p2 } = isGame.score;
       if (p1 > -1 && p2 > -1) {
+        // choosing winner if we have scores from both users
         isGame.status = true;
         // check winner and notify players
         let winner: Array<any> = [];
@@ -144,10 +155,13 @@ socketIo.on("connection", async (socket: any) => {
         console.log({ winner });
 
         getUserBywalletId(winner, async (result: Array<any>) => {
-          console.log({ result });
+          // fetching user by wallet address
           isGame.winner = result;
           await isGame.save();
           socketIo.to(roomId).emit("winner", winner);
+
+          console.log("send winners :- ".red.bold);
+          console.log(winner);
         });
       }
     }
@@ -171,7 +185,7 @@ socketIo.on("connection", async (socket: any) => {
     async (walletId: any, amount: any, level: any) => {
       console.log("\n\nPlayer Available for Match", walletId);
 
-      const checkUser = await userModal.findOne({ wallet: walletId });
+      const checkUser = await userModal.findOne({ wallet: walletId }); // check user if user is already in a matching
 
       if (checkUser) {
         const alreadySearching = await availableUserModel.findOne({
@@ -179,7 +193,7 @@ socketIo.on("connection", async (socket: any) => {
         });
 
         if (alreadySearching) {
-          console.log("already in Matching");
+          console.log("already in Matching"); // notify user if user is in matching and return here
           socket.emit("message", `alrady in Maching  ${alreadySearching}`);
           return false;
         }
@@ -201,7 +215,8 @@ socketIo.on("connection", async (socket: any) => {
   );
 });
 
-function sleep(time: number, func?: () => void) {
+function sleep(time: number) {
+  // wait for a while then start Searching for opponnet
   return new Promise((resolve, reject) =>
     setTimeout(() => {
       resolve(true);
@@ -212,11 +227,12 @@ function sleep(time: number, func?: () => void) {
 async function startMatching(socket: any, data: any) {
   //  find match
   try {
-    console.log("starting Search");
+    console.log("Looking for Opponent pls..... wait ");
     let isOpponent = false;
     while (!isOpponent) {
+      // check untill user gets a opponent
       // socket.emit("message", "Searching");
-      await sleep(5000);
+      await sleep(2000); // wait to some time and check for opponent
       const checkAvailablility = await availableUserModel.findOne({
         userId: data.userId,
         amount: data.amount,
@@ -224,22 +240,27 @@ async function startMatching(socket: any, data: any) {
       });
 
       if (!checkAvailablility) {
+        // if played is matched with someOne else then stop the search & notify user
         console.log("already paired with someOne");
         return (isOpponent = true);
       }
 
       const opponent = await availableUserModel.findOne({
+        // find opponent based on parameters provided like amont & no. of theives
         userId: { $ne: data.userId },
         amount: data.amount,
         level: data.level,
       });
       if (opponent) {
+        // if got opponent
         await availableUserModel.findOneAndRemove({
+          // remove users from available array
           userId: opponent.userId,
         });
-        await availableUserModel.findOneAndRemove({ userId: data.userId });
+        await availableUserModel.findOneAndRemove({ userId: data.userId }); // some as above
 
         const p1Id = await addTransaction(
+          // creating a payement with status pending
           data.amount,
           data.walletId,
           "false",
@@ -247,27 +268,30 @@ async function startMatching(socket: any, data: any) {
         );
 
         const p2Id = await addTransaction(
+          // creating payment record with status pending
           opponent.amount,
           opponent.walletId,
           "false",
           false
         );
 
-        const roomid = uuidv4();
+        const roomid = uuidv4(); // generating a random number to represent current session
         const newGame = new gameRecordsModal({
+          // creating a record for current game session
           gameId: roomid,
           user1: p1Id,
           user2: p2Id,
         });
         await newGame.save();
 
-        console.log({ opponent, notifiying: "opponent" });
+        console.log({ opponent, notifiying: "opponent" }); // notify both user new room id and let them start their payment
         socket.to(opponent.socketId).emit("gotOpponent", data, roomid, p2Id);
         socket.emit("gotOpponent", opponent, roomid, p1Id);
 
         isOpponent = true;
       } else {
         socket.emit("noOpponent", {
+          // no opponent found search again after some time
           opponent: false,
           message: "no oppenent Found",
         });
@@ -279,6 +303,7 @@ async function startMatching(socket: any, data: any) {
 }
 
 async function isPayment(gameId: string) {
+  // verify payment and let both players play their
   // verify payment and start game
   return new Promise(async (resolve) => {
     const game = await gameRecordsModal
@@ -286,9 +311,6 @@ async function isPayment(gameId: string) {
       .populate("user1")
       .populate("user2");
     if (game) {
-      // console.log({ UpdatingGame: game });
-      // console.log({ statusp1: game.user1.status });
-      // console.log({ statusp2: game.user2.status });
       if (game.user1.status && game.user2.status) {
         resolve(true);
       } else {

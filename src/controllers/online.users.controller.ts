@@ -9,14 +9,17 @@ export interface Data {
 }
 
 export const addtoOnlineList = async (data: Data) => {
+  // if a user opens game page then add user to online users list
   const check = await onlineUserModal.findOne({ wallet: data.wallet });
 
   if (check) {
+    // checking user it already exist or not ?
     console.log({ message: "useralready exit" });
     return;
   }
 
   const newEntry = new onlineUserModal({
+    // creating new Entry of user in online users
     name: data.name,
     profilePic: data.profilePic,
     socketId: data.socketId,
@@ -26,11 +29,13 @@ export const addtoOnlineList = async (data: Data) => {
 };
 
 export const removeUser = async (socketid: string) => {
+  // remove a user if user disconnect
   await onlineUserModal.findOneAndRemove({ socketId: socketid });
   await availableUserModel.findOneAndRemove({ socketId: socketid });
 };
 
 export const getOnlineusers = async (req: Request, res: Response) => {
+  // get array of user who are online
   const { page = 1, limit = 10 } = req.query;
 
   try {
@@ -41,6 +46,7 @@ export const getOnlineusers = async (req: Request, res: Response) => {
       // @ts-ignore
       .skip((page - 1) * limit);
 
+    // counting total no. of entries in collection
     const count = await onlineUserModal.countDocuments();
 
     res.send({

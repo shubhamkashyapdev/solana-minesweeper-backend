@@ -3,9 +3,9 @@ import { Schema, model } from "mongoose";
 interface Entry {
   amount: number;
   userId: string;
-  socketId: string;
-  profilePic: string;
-  walletId: string;
+  socketId: string; // it changes whenever user connect
+  profilePic: string; // link of user profile pic
+  walletId: string; // phantham wallet Address
   level: Number;
 }
 

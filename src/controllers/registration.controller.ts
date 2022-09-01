@@ -10,6 +10,7 @@ cloudinary.config({
 });
 
 export const resgister = async (req: Request, res: Response) => {
+  // register a user with their walletAddress and name (optional)
   const name = req.body.name;
   const walletAddress = req.body.walletAddress;
 
@@ -27,11 +28,12 @@ export const resgister = async (req: Request, res: Response) => {
     const checkUser = await userModal.findOne({ wallet: walletAddress });
 
     if (checkUser) {
+      // check for user if it already exist
       res.send({ success: false, message: "user already exist" });
       return;
     }
 
-    const user = await newUser.save();
+    const user = await newUser.save(); // save new
     res.send({ success: true, data: user });
   } catch (err) {
     console.log({ err });
@@ -40,6 +42,7 @@ export const resgister = async (req: Request, res: Response) => {
 };
 
 export const profileImgUpload = async (req: Request, res: Response) => {
+  // take profile Pictiure form user and upload to cloudnery and store secure Link provided by cloudnery
   const wallletId = req.body.walletId;
   // console.log({ wallletId });
   if (req.files) {
@@ -69,7 +72,6 @@ export const profileImgUpload = async (req: Request, res: Response) => {
               await user.save();
             }
             res.json({ success: true, url: result.secure_url });
-            // console.log({ result });
           }
         }
       );

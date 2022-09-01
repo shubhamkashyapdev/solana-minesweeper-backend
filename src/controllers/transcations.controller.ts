@@ -2,6 +2,7 @@ import { transactionModal } from "../models/transaction.modal";
 import { Request, Response } from "express";
 
 export const getAllTransction = async (req: Request, res: Response) => {
+  // get all transction
   const { page = 1, limit = 10 } = req.query;
   const walletId = req.query.walletId;
   if (!walletId) {
@@ -33,6 +34,7 @@ export const getAllTransction = async (req: Request, res: Response) => {
 };
 
 export const addTransaction = async (
+  // create transcation
   amount: number,
   walletId: string,
   signature: string,
@@ -55,6 +57,7 @@ export const addTransaction = async (
 };
 
 export const updateTransaction = async (
+  // update status of transcation and  its signature
   id: string,
   signature: string,
   isPaid: boolean
