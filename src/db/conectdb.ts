@@ -10,6 +10,9 @@ export const connectToDB = async () => {
     await mongoose.connect(dbUrl);
     console.log("connected to mongodb".red);
   } catch (err) {
+    console.log(
+      "Shutting down server : unable to connect mongodb database".bgRed
+    );
     console.log({ err });
     process.exit();
   }

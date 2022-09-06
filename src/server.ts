@@ -194,7 +194,11 @@ socketIo.on("connection", async (socket: any) => {
 
         if (alreadySearching) {
           console.log("already in Matching"); // notify user if user is in matching and return here
-          socket.emit("message", `alrady in Maching  ${alreadySearching}`);
+          const object = {
+            doc: alreadySearching,
+            isMatching: true,
+          };
+          socket.emit("message", object);
           return false;
         }
 
