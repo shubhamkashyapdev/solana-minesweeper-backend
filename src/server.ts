@@ -36,15 +36,14 @@ app.use(express.urlencoded({ extended: false }));
 app.use(morgan("dev"));
 app.use(bodyParser.json());
 
-app.get("/", (req, res) => {
-  res.send(`API is working fine!`);
-});
-
 app.use("/", userRotes); // user registration and upload profile pic
 app.use("/", transactionRoutes); // get all trancsation
 app.use("/", onlineUsersRoute); // get list of online user and other
 app.use("/", gameRecodsRoutes); // get game records
 
+app.get("/", (req, res) => {
+  res.send(`API is working fine!`);
+});
 connectToDB(); // try connection to mongodb
 
 const server = app.listen(PORT, () => {
