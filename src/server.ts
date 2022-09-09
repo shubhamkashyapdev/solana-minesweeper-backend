@@ -25,6 +25,7 @@ import {
 } from "./controllers/transcations.controller";
 import { gameRecordsModal } from "./models/gameRecords.modal";
 import colors from "colors";
+import { makePayment } from "./controllers/solana.transcation.controller";
 colors.enable();
 
 const app = express();
@@ -138,27 +139,36 @@ socketIo.on("connection", async (socket: any) => {
       await isGame.save(); // saving game record
 
       const { p1, p2 } = isGame.score;
-      if (p1 > -1 && p2 > -1) {
+      if (p1 > -1 && p2 > -1 && !isGame.status) {
         // choosing winner if we have scores from both users
         isGame.status = true;
+        let winnerTransactionId = "";
         // check winner and notify players
         let winner: Array<any> = [];
         if (isGame.score.p1 > isGame.score.p2) {
           winner.push(isGame.user1.walletId);
+          winnerTransactionId = isGame.user1;
         } else if (isGame.score.p1 < isGame.score.p2) {
           winner.push(isGame.user2.walletId);
+          winnerTransactionId = isGame.user2;
         } else {
           winner = [isGame.user1.walletId, isGame.user2.walletId];
           console.log("tie");
         }
         console.log({ winner });
 
+        if (winner.length > 1) {
+          makePayment(winner[0], isGame.user1, "tie");
+          makePayment(winner[1], isGame.user2, "tie");
+        } else {
+          makePayment(winner[0], winnerTransactionId, "win");
+        }
+
         getUserBywalletId(winner, async (result: Array<any>) => {
           // fetching user by wallet address
           isGame.winner = result;
           await isGame.save();
           socketIo.to(roomId).emit("winner", winner);
-
           console.log("send winners :- ".red.bold);
           console.log(winner);
         });
