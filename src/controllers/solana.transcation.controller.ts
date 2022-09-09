@@ -46,7 +46,6 @@ export const makePayment = async (
 
   sendAndConfirmTransaction(connection, transaction, [sender]);
 };
-
 export const fetchAmount = async (_id: string) => {
   const findDoc = await transactionModal.findOne({ _id: _id });
   if (findDoc) {
